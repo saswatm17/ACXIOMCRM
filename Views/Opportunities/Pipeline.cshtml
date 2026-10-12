@@ -1,0 +1,151 @@
+@model AcxiomCRM.ViewModels.OpportunityPipelineViewModel
+@using AcxiomCRM.Models.Constants
+@{
+    ViewData["Title"] = "Sales Pipeline Board";
+}
+
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-3 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-kanban text-primary me-2"></i>Sales Pipeline Board
+            </h2>
+            <p class="text-secondary small mb-0">Visual stage progression, deal weights, and pipeline funnel</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-table me-1"></i> Table View
+            </a>
+            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-circle-fill me-1"></i> New Opportunity
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Top Total Bar -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-4 p-3">
+        <div class="row text-center g-3">
+            <div class="col-md-4 border-end">
+                <span class="text-muted small text-uppercase fw-semibold">Active Pipeline Value</span>
+                <h3 class="fw-bold text-primary mb-0 mt-1">₹@Model.TotalPipelineValue.ToString("N0")</h3>
+            </div>
+            <div class="col-md-4 border-end">
+                <span class="text-muted small text-uppercase fw-semibold">Total Weighted Forecast</span>
+                <h3 class="fw-bold text-info mb-0 mt-1">₹@Model.TotalWeightedValue.ToString("N0")</h3>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-semibold">Total Pipeline Deals</span>
+                <h3 class="fw-bold text-dark mb-0 mt-1">@Model.TotalDealsCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Stage Columns -->
+    <div class="row g-3 flex-nowrap overflow-auto pb-4" style="min-height: 60vh;">
+        @foreach (var stage in Model.Stages)
+        {
+            var headerColor = stage.StageName switch
+            {
+                "Qualification" => "border-secondary",
+                "Proposal" => "border-info",
+                "Negotiation" => "border-warning",
+                "Won" => "border-success",
+                "Lost" => "border-danger",
+                _ => "border-light"
+            };
+
+            var badgeBg = stage.StageName switch
+            {
+                "Qualification" => "bg-secondary",
+                "Proposal" => "bg-info",
+                "Negotiation" => "bg-warning text-dark",
+                "Won" => "bg-success",
+                "Lost" => "bg-danger",
+                _ => "bg-light text-dark"
+            };
+
+            <div class="col-12 col-md-4 col-xl" style="min-width: 280px; max-width: 330px;">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-light">
+                    <!-- Column Header -->
+                    <div class="card-header bg-white border-bottom border-2 @headerColor p-3 rounded-top-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold mb-0 text-dark">@stage.StageName</h6>
+                            <span class="badge @badgeBg rounded-pill px-2">@stage.DealsCount</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center small text-muted">
+                            <span>Total: <strong class="text-dark">₹@stage.TotalAmount.ToString("N0")</strong></span>
+                            <span>Weighted: <strong class="text-info">₹@stage.WeightedAmount.ToString("N0")</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Column Body: Deal Cards -->
+                    <div class="card-body p-2 d-flex flex-column gap-2 overflow-auto" style="max-height: 68vh;">
+                        @if (stage.Deals.Any())
+                        {
+                            foreach (var deal in stage.Deals)
+                            {
+                                var dealWeighted = (deal.Amount * deal.Probability) / 100m;
+                                <div class="card border-0 shadow-sm rounded-3 bg-white p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <a asp-action="Details" asp-route-id="@deal.OpportunityId" class="fw-bold text-dark text-decoration-none small text-truncate" style="max-width: 190px;">
+                                            @deal.OpportunityName
+                                        </a>
+                                        <span class="badge bg-light text-secondary border small">@deal.Probability%</span>
+                                    </div>
+                                    <div class="text-muted small mb-2 text-truncate">
+                                        <i class="bi bi-building me-1"></i>@(deal.Customer?.CustomerName ?? "—")
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <div>
+                                            <div class="fw-bold text-dark small">₹@deal.Amount.ToString("N0")</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">Weighted: ₹@dealWeighted.ToString("N0")</div>
+                                        </div>
+
+                                        <!-- Quick Stage Changer Dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light border rounded-circle p-1" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end small shadow-sm">
+                                                <li class="dropdown-header small text-uppercase">Move Stage</li>
+                                                @foreach (var nextStage in OpportunityStage.All)
+                                                {
+                                                    if (nextStage != deal.Stage)
+                                                    {
+                                                        <li>
+                                                            <form asp-action="ChangeStage" asp-route-id="@deal.OpportunityId" asp-route-stage="@nextStage" asp-route-returnUrl="Pipeline" method="post">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="dropdown-item">
+                                                                    &rarr; @nextStage
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    }
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted small opacity-75">
+                                <em>No deals in @stage.StageName</em>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

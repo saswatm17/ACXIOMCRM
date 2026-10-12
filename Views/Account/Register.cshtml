@@ -1,0 +1,91 @@
+@model AcxiomCRM.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-7 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-dark text-white p-4 text-center border-0">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary rounded-circle mb-2" style="width: 50px; height: 50px;">
+                    <i class="bi bi-person-plus-fill text-white fs-4"></i>
+                </div>
+                <h4 class="fw-bold mb-1">Create Account</h4>
+                <p class="text-white-50 small mb-0">Join AcxiomCRM Sales Team</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5 bg-white">
+                <form asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label fw-semibold small text-secondary"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+                            <input asp-for="FullName" class="form-control border-start-0 ps-0" placeholder="e.g. Suresh Kumar" autofocus />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label fw-semibold small text-secondary"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control border-start-0 ps-0" placeholder="suresh@acxiomcrm.com" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label fw-semibold small text-secondary"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+                                <input asp-for="PhoneNumber" class="form-control border-start-0 ps-0" placeholder="9876543210" maxlength="10" />
+                            </div>
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="form-label fw-semibold small text-secondary"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control border-start-0 ps-0" placeholder="Min 8 chars" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmPassword" class="form-label fw-semibold small text-secondary"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-lock-fill"></i></span>
+                                <input asp-for="ConfirmPassword" class="form-control border-start-0 ps-0" placeholder="Repeat password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted mb-4 py-2">
+                        <i class="bi bi-shield-lock me-1 text-primary"></i>
+                        Password requires at least 8 characters including uppercase, lowercase, digit, and special character.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-semibold shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> Register Account
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <span class="text-muted small">Already have an account? </span>
+                    <a asp-action="Login" class="small fw-semibold text-primary text-decoration-none">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,151 @@
+@model IEnumerable<AcxiomCRM.ViewModels.FollowUpComplianceReportItem>
+@{
+    ViewData["Title"] = "Follow-Up Compliance Report";
+    var filter = ViewBag.Filter as AcxiomCRM.ViewModels.ReportFilterViewModel;
+    var totalScheduled = Model.Sum(x => x.TotalScheduled);
+    var totalCompleted = Model.Sum(x => x.CompletedOnTime);
+    var totalMissed = Model.Sum(x => x.MissedOrOverdue);
+    var avgCompliance = Model.Any() ? Model.Average(x => x.ComplianceRate) : 0.0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-action="Index">Reports Hub</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Follow-Up Compliance</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0"><i class="bi bi-calendar2-check-fill text-danger me-2"></i>Follow-Up Compliance & SLA Report</h2>
+    </div>
+    <div>
+        <a asp-action="FollowUpCompliance" 
+           asp-route-fromDate="@filter?.FromDate?.ToString("yyyy-MM-dd")" 
+           asp-route-toDate="@filter?.ToDate?.ToString("yyyy-MM-dd")" 
+           asp-route-staffId="@filter?.StaffId" 
+           asp-route-export="true" 
+           class="btn btn-danger fw-semibold">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small fw-semibold">TOTAL SCHEDULED</div>
+            <div class="fs-3 fw-bold text-dark">@totalScheduled</div>
+            <div class="text-muted small">Assigned customer callbacks</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small fw-semibold">COMPLETED ON TIME</div>
+            <div class="fs-3 fw-bold text-success">@totalCompleted</div>
+            <div class="text-muted small">Adhered to target date</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small fw-semibold">MISSED / OVERDUE</div>
+            <div class="fs-3 fw-bold text-danger">@totalMissed</div>
+            <div class="text-muted small">SLA breaches</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small fw-semibold">COMPLIANCE SCORE</div>
+            <div class="fs-3 fw-bold @(avgCompliance >= 80 ? "text-success" : avgCompliance >= 50 ? "text-warning" : "text-danger")">
+                @avgCompliance.ToString("F1")%
+            </div>
+            <div class="text-muted small">Team SLA rate</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="get" asp-action="FollowUpCompliance" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">From Date</label>
+                <input type="date" name="fromDate" value="@filter?.FromDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">To Date</label>
+                <input type="date" name="toDate" value="@filter?.ToDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Assigned Executive</label>
+                <select name="staffId" class="form-select form-select-sm">
+                    <option value="">-- All Executives --</option>
+                    @if (filter?.StaffList != null)
+                    {
+                        foreach (var item in filter.StaffList)
+                        {
+                            <option value="@item.Value" selected="@(item.Value == filter.StaffId)">@item.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-filter me-1"></i>Filter</button>
+                <a asp-action="FollowUpCompliance" class="btn btn-sm btn-light border"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-3">Staff Member</th>
+                        <th>Total Scheduled</th>
+                        <th>Completed</th>
+                        <th>Missed / Overdue</th>
+                        <th>Cancelled</th>
+                        <th>Compliance Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">No follow-up compliance records available.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-bold">@item.StaffName</td>
+                                <td class="fw-bold">@item.TotalScheduled</td>
+                                <td class="text-success fw-semibold">@item.CompletedOnTime</td>
+                                <td class="text-danger fw-semibold">@item.MissedOrOverdue</td>
+                                <td class="text-muted">@item.Cancelled</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2" style="min-width: 140px;">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar @(item.ComplianceRate >= 80 ? "bg-success" : item.ComplianceRate >= 50 ? "bg-warning" : "bg-danger")" 
+                                                 role="progressbar" 
+                                                 style="width: @item.ComplianceRate%"></div>
+                                        </div>
+                                        <span class="badge @(item.ComplianceRate >= 80 ? "bg-success-subtle text-success" : item.ComplianceRate >= 50 ? "bg-warning-subtle text-warning" : "bg-danger-subtle text-danger") border">
+                                            @item.ComplianceRate.ToString("F1")%
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

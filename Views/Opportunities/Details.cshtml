@@ -1,0 +1,151 @@
+@model AcxiomCRM.Models.Opportunity
+@using AcxiomCRM.Models.Constants
+@{
+    ViewData["Title"] = $"{Model.OpportunityName} - Details";
+    var weighted = (Model.Amount * Model.Probability) / 100m;
+
+    var stages = new[] { OpportunityStage.Qualification, OpportunityStage.Proposal, OpportunityStage.Negotiation, OpportunityStage.Won };
+    var currentStageIdx = Array.IndexOf(stages, Model.Stage);
+}
+
+<div class="container-fluid py-2">
+    <!-- Header banner -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge @(Model.Status == OpportunityStatus.Won ? "bg-success" : Model.Status == OpportunityStatus.Lost ? "bg-danger" : "bg-primary") rounded-pill px-3 py-1">
+                    @Model.Status - @Model.Stage
+                </span>
+                <h2 class="fw-bold mb-0">@Model.OpportunityName</h2>
+            </div>
+            <p class="text-secondary small mb-0">
+                <i class="bi bi-person me-1"></i>Owner: <strong>@(Model.AssignedToUser?.FullName ?? "Unassigned")</strong> &bull;
+                <i class="bi bi-clock me-1 ms-2"></i>Created @Model.CreatedDate.ToString("dd MMM yyyy")
+            </p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            @if (Model.Status == OpportunityStatus.Open)
+            {
+                <form asp-action="ChangeStage" asp-route-id="@Model.OpportunityId" asp-route-stage="@OpportunityStage.Won" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success rounded-pill px-3 shadow-sm">
+                        <i class="bi bi-trophy-fill me-1"></i> Mark as Won
+                    </button>
+                </form>
+                <form asp-action="ChangeStage" asp-route-id="@Model.OpportunityId" asp-route-stage="@OpportunityStage.Lost" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-3">
+                        <i class="bi bi-x-circle me-1"></i> Mark as Lost
+                    </button>
+                </form>
+            }
+            <a asp-action="Edit" asp-route-id="@Model.OpportunityId" class="btn btn-outline-primary rounded-pill px-3">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Financial KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
+                <span class="text-muted small text-uppercase fw-semibold">Deal Amount</span>
+                <h3 class="fw-bold text-dark mb-0 mt-1">₹@Model.Amount.ToString("N2")</h3>
+                <span class="text-muted small">Total potential contract value</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
+                <span class="text-muted small text-uppercase fw-semibold">Win Probability</span>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <h3 class="fw-bold text-primary mb-0">@Model.Probability%</h3>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar @(Model.Probability >= 70 ? "bg-success" : Model.Probability >= 40 ? "bg-warning" : "bg-danger")" style="width: @Model.Probability%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
+                <span class="text-muted small text-uppercase fw-semibold">Weighted Value</span>
+                <h3 class="fw-bold text-info mb-0 mt-1">₹@weighted.ToString("N2")</h3>
+                <span class="text-muted small">Amount &times; Probability / 100</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-3">
+                <span class="text-muted small text-uppercase fw-semibold">Expected Close Date</span>
+                <h4 class="fw-bold text-dark mb-0 mt-1">@Model.ExpectedCloseDate.ToString("dd MMM yyyy")</h4>
+                <span class="text-muted small">Forecasted target close date</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Account & Lead Cards -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-4">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3">
+                    <i class="bi bi-building text-primary me-2"></i>Account & Customer Profile
+                </h6>
+                @if (Model.Customer != null)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-dark mb-0">@Model.Customer.CustomerName</h5>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">@Model.Customer.CustomerCode</span>
+                    </div>
+                    <ul class="list-unstyled mb-3 small text-secondary">
+                        <li class="mb-1"><i class="bi bi-envelope me-1"></i>@Model.Customer.Email</li>
+                        <li class="mb-1"><i class="bi bi-telephone me-1"></i>@Model.Customer.Phone</li>
+                        <li><i class="bi bi-geo-alt me-1"></i>@(Model.Customer.City ?? "—"), @(Model.Customer.State ?? "—")</li>
+                    </ul>
+                    <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.Customer.CustomerId" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <i class="bi bi-eye me-1"></i> View Customer 360
+                    </a>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">No customer organization linked to this opportunity.</p>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white p-4">
+                <h6 class="fw-bold text-muted text-uppercase small mb-3">
+                    <i class="bi bi-funnel text-success me-2"></i>Originating Lead Inquiry
+                </h6>
+                @if (Model.Lead != null)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-dark mb-0">@Model.Lead.LeadName</h5>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">@Model.Lead.LeadCode</span>
+                    </div>
+                    <ul class="list-unstyled mb-3 small text-secondary">
+                        <li class="mb-1"><i class="bi bi-envelope me-1"></i>@Model.Lead.Email</li>
+                        <li class="mb-1"><i class="bi bi-telephone me-1"></i>@Model.Lead.Phone</li>
+                        <li><i class="bi bi-diagram-3 me-1"></i>Source: <strong>@Model.Lead.Source</strong></li>
+                    </ul>
+                    <a asp-controller="Leads" asp-action="Details" asp-route-id="@Model.Lead.LeadId" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                        <i class="bi bi-eye me-1"></i> View Originating Lead
+                    </a>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">Created directly as an opportunity (no originating lead record).</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

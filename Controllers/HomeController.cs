@@ -1,0 +1,42 @@
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using AcxiomCRM.Models;
+
+namespace AcxiomCRM.Controllers;
+
+public class HomeController : Controller
+{
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger)
+    {
+        _logger = logger;
+    }
+
+    public IActionResult Index()
+    {
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            return RedirectToAction("Index", "Dashboard");
+        }
+        return View();
+    }
+
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    // Friendly error page for HTTP status codes (404, 403, 500)
+    public IActionResult ErrorStatus(int code = 404)
+    {
+        ViewBag.StatusCode = code;
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+}

@@ -1,0 +1,150 @@
+@model AcxiomCRM.ViewModels.ActivityFormViewModel
+@using AcxiomCRM.Models.Constants
+@{
+    ViewData["Title"] = "Log Activity";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom py-3 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="fw-bold mb-1 text-dark">
+                                <i class="bi bi-calendar-plus text-primary me-2"></i>Log Activity
+                            </h4>
+                            <p class="text-muted small mb-0">Record a phone call, meeting, email interaction, or pending task.</p>
+                        </div>
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" id="activityForm">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3" role="alert"></div>
+
+                        <!-- Association Type Toggle -->
+                        <div class="mb-4 p-3 bg-light rounded-3 border">
+                            <label class="form-label fw-bold small text-uppercase text-muted mb-2">Associate Activity With</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="associationType" id="assocCustomer" value="Customer" @(Model.CustomerId.HasValue || !Model.LeadId.HasValue ? "checked" : "")>
+                                    <label class="form-check-label fw-semibold" for="assocCustomer">
+                                        <i class="bi bi-building me-1 text-primary"></i> Customer Account
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="associationType" id="assocLead" value="Lead" @(Model.LeadId.HasValue ? "checked" : "")>
+                                    <label class="form-check-label fw-semibold" for="assocLead">
+                                        <i class="bi bi-person-lines-fill me-1 text-warning"></i> Lead Prospect
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Selection -->
+                        <div class="mb-3" id="customerGroup">
+                            <label asp-for="CustomerId" class="form-label fw-semibold">Customer Account <span class="text-danger">*</span></label>
+                            <select asp-for="CustomerId" asp-items="Model.CustomersList" class="form-select">
+                                <option value="">-- Select Customer Account --</option>
+                            </select>
+                            <span asp-validation-for="CustomerId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Lead Selection -->
+                        <div class="mb-3 d-none" id="leadGroup">
+                            <label asp-for="LeadId" class="form-label fw-semibold">Lead Prospect <span class="text-danger">*</span></label>
+                            <select asp-for="LeadId" asp-items="Model.LeadsList" class="form-select">
+                                <option value="">-- Select Active Lead --</option>
+                            </select>
+                            <span asp-validation-for="LeadId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="mb-3">
+                            <label asp-for="Subject" class="form-label fw-semibold">Activity Subject <span class="text-danger">*</span></label>
+                            <input asp-for="Subject" class="form-control" placeholder="e.g. Discovery call on cloud ERP requirements" />
+                            <span asp-validation-for="Subject" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="ActivityType" class="form-label fw-semibold">Activity Type <span class="text-danger">*</span></label>
+                                <select asp-for="ActivityType" asp-items="Model.TypesList" class="form-select"></select>
+                                <span asp-validation-for="ActivityType" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ActivityDate" class="form-label fw-semibold">Date & Time <span class="text-danger">*</span></label>
+                                <input asp-for="ActivityDate" type="datetime-local" class="form-control"
+                                       value="@Model.ActivityDate.ToString("yyyy-MM-ddTHH:mm")" />
+                                <span asp-validation-for="ActivityDate" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Status" class="form-label fw-semibold">Initial Status <span class="text-danger">*</span></label>
+                                <select asp-for="Status" asp-items="Model.StatusesList" class="form-select"></select>
+                                <span asp-validation-for="Status" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AssignedTo" class="form-label fw-semibold">Assigned Staff Member</label>
+                                <select asp-for="AssignedTo" asp-items="Model.UsersList" class="form-select">
+                                    <option value="">-- Select Responsible Staff --</option>
+                                </select>
+                                <span asp-validation-for="AssignedTo" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Notes / Discussion Details</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Summarize topics discussed, questions asked, or action items..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i> Save Activity
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const radioCust = document.getElementById("assocCustomer");
+            const radioLead = document.getElementById("assocLead");
+            const custGroup = document.getElementById("customerGroup");
+            const leadGroup = document.getElementById("leadGroup");
+            const custSelect = document.getElementById("CustomerId");
+            const leadSelect = document.getElementById("LeadId");
+
+            function toggleFields() {
+                if (radioCust.checked) {
+                    custGroup.classList.remove("d-none");
+                    leadGroup.classList.add("d-none");
+                    leadSelect.value = "";
+                } else {
+                    leadGroup.classList.remove("d-none");
+                    custGroup.classList.add("d-none");
+                    custSelect.value = "";
+                }
+            }
+
+            radioCust.addEventListener("change", toggleFields);
+            radioLead.addEventListener("change", toggleFields);
+            toggleFields();
+        });
+    </script>
+}

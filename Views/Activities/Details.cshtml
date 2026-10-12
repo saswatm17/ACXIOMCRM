@@ -1,0 +1,198 @@
+@model AcxiomCRM.Models.Activity
+@using AcxiomCRM.Models.Constants
+@{
+    ViewData["Title"] = $"Activity - {Model.Subject}";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm me-2">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h3 class="fw-bold mb-0 text-dark">@Model.Subject</h3>
+                @switch (Model.ActivityType)
+                {
+                    case ActivityType.Call:
+                        <span class="badge bg-info-subtle text-info fs-6"><i class="bi bi-telephone-fill me-1"></i> Call</span>
+                        break;
+                    case ActivityType.Meeting:
+                        <span class="badge bg-purple-subtle text-purple fs-6" style="background-color: #ede9fe; color: #6d28d9;"><i class="bi bi-people-fill me-1"></i> Meeting</span>
+                        break;
+                    case ActivityType.Email:
+                        <span class="badge bg-secondary-subtle text-secondary fs-6"><i class="bi bi-envelope-fill me-1"></i> Email</span>
+                        break;
+                    default:
+                        <span class="badge bg-primary-subtle text-primary fs-6"><i class="bi bi-check2-square me-1"></i> Task</span>
+                        break;
+                }
+                @switch (Model.Status)
+                {
+                    case ActivityStatus.Pending:
+                        <span class="badge bg-warning text-dark fs-6">Pending</span>
+                        break;
+                    case ActivityStatus.Completed:
+                        <span class="badge bg-success fs-6">Completed</span>
+                        break;
+                    case ActivityStatus.Cancelled:
+                        <span class="badge bg-secondary fs-6">Cancelled</span>
+                        break;
+                }
+            </div>
+            <p class="text-muted small mb-0">Recorded on @Model.ActivityDate.ToString("dddd, dd MMMM yyyy at hh:mm tt")</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (Model.Status == ActivityStatus.Pending)
+            {
+                <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#completeModal">
+                    <i class="bi bi-check-circle me-1"></i> Mark Completed
+                </button>
+            }
+            <a asp-action="Edit" asp-route-id="@Model.ActivityId" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Notifications -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Activity Notes & Details -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-card-text text-primary me-2"></i>Discussion Summary & Notes</h5>
+                </div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <p class="text-muted fst-italic mb-0">No discussion notes recorded for this activity.</p>
+                    }
+                    else
+                    {
+                        <div class="p-3 bg-light rounded-3 border" style="white-space: pre-line; line-height: 1.6;">
+                            @Model.Description
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Activity Meta Info -->
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-info-circle text-primary me-2"></i>Activity Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Activity Type:</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.ActivityType</dd>
+
+                        <dt class="col-sm-4 text-muted">Activity Date:</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.ActivityDate.ToString("dd MMM yyyy, hh:mm tt")</dd>
+
+                        <dt class="col-sm-4 text-muted">Assigned Staff:</dt>
+                        <dd class="col-sm-8 fw-semibold">
+                            @(Model.AssignedToUser?.FullName ?? "Unassigned")
+                            @if (!string.IsNullOrEmpty(Model.AssignedToUser?.Email))
+                            {
+                                <span class="small text-muted">(@Model.AssignedToUser.Email)</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">Created Date:</dt>
+                        <dd class="col-sm-8 text-dark">@Model.CreatedDate.ToString("dd MMM yyyy, hh:mm tt")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Account / Prospect Card -->
+        <div class="col-lg-5">
+            @if (Model.Customer != null)
+            {
+                <div class="card border-0 shadow-sm rounded-3 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-building text-primary me-2"></i>Customer Account</h5>
+                        <span class="badge bg-primary-subtle text-primary">@Model.Customer.CustomerCode</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="fw-bold text-dark mb-1">@Model.Customer.CustomerName</h5>
+                        <p class="text-muted small mb-3">@(Model.Customer.CompanyName ?? Model.Customer.City)</p>
+
+                        <ul class="list-unstyled small mb-3">
+                            <li class="mb-2"><i class="bi bi-envelope text-muted me-2"></i> <a href="mailto:@Model.Customer.Email" class="text-decoration-none">@Model.Customer.Email</a></li>
+                            <li class="mb-2"><i class="bi bi-telephone text-muted me-2"></i> <a href="tel:@Model.Customer.Phone" class="text-decoration-none">@Model.Customer.Phone</a></li>
+                            <li class="mb-2"><i class="bi bi-geo-alt text-muted me-2"></i> @Model.Customer.City, @Model.Customer.State</li>
+                        </ul>
+
+                        <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.Customer.CustomerId" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> View 360° Customer Profile
+                        </a>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Lead != null)
+            {
+                <div class="card border-0 shadow-sm rounded-3 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-lines-fill text-warning me-2"></i>Lead Prospect</h5>
+                        <span class="badge bg-warning-subtle text-warning">@Model.Lead.LeadCode</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="fw-bold text-dark mb-1">@Model.Lead.LeadName</h5>
+                        <p class="text-muted small mb-3">@(Model.Lead.CompanyName ?? Model.Lead.Source)</p>
+
+                        <ul class="list-unstyled small mb-3">
+                            <li class="mb-2"><i class="bi bi-envelope text-muted me-2"></i> <a href="mailto:@Model.Lead.Email" class="text-decoration-none">@Model.Lead.Email</a></li>
+                            <li class="mb-2"><i class="bi bi-telephone text-muted me-2"></i> <a href="tel:@Model.Lead.Phone" class="text-decoration-none">@Model.Lead.Phone</a></li>
+                            <li class="mb-2"><i class="bi bi-cash-stack text-muted me-2"></i> Expected: ₹@Model.Lead.ExpectedValue.ToString("N0")</li>
+                        </ul>
+
+                        <a asp-controller="Leads" asp-action="Details" asp-route-id="@Model.Lead.LeadId" class="btn btn-outline-warning text-dark btn-sm w-100">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> View Lead Details & History
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Complete -->
+@if (Model.Status == ActivityStatus.Pending)
+{
+    <div class="modal fade" id="completeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="Complete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.ActivityId" />
+                    <input type="hidden" name="returnUrl" value="@Url.Action("Details", new { id = Model.ActivityId })" />
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-success"><i class="bi bi-check-circle me-2"></i> Mark Activity Completed</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-2">Record final outcomes, meeting minutes, or action summary:</p>
+                        <textarea name="completionNote" class="form-control" rows="4" placeholder="Enter completion notes..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-sm btn-success">Mark as Completed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
